@@ -26,8 +26,19 @@ const CartView: React.FC<CartViewProps> = ({ items, onRemove, onUpdateQty, onCle
   const deliveryDate = new Date();
   deliveryDate.setDate(deliveryDate.getDate() + Math.floor(Math.random() * 4) + 3);
 
+  const generateTrackerId = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let result = 'SD-';
+    for (let i = 0; i < 4; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
+    result += `-${address.phone.slice(-4) || '9985'}`;
+    return result;
+  };
+
   const handleFinishCheckout = () => {
-    const trackerId = `SRI-TRK-${Math.floor(1000 + Math.random() * 9000)}`;
+    const trackerId = generateTrackerId();
+    const statuses: Order['status'][] = ['PROCESSING', 'SHIPPED', 'OUT_FOR_DELIVERY'];
+    const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+    
     const newOrder: Order = {
       id: Date.now().toString(),
       trackerId,
@@ -37,7 +48,7 @@ const CartView: React.FC<CartViewProps> = ({ items, onRemove, onUpdateQty, onCle
       customerAddress: `${address.line1}, ${address.city}`,
       total,
       deliveryDate: deliveryDate.toISOString(),
-      status: 'PROCESSING'
+      status: randomStatus // Random initial status for demonstration
     };
     
     setCurrentOrderId(trackerId);
@@ -104,8 +115,7 @@ const CartView: React.FC<CartViewProps> = ({ items, onRemove, onUpdateQty, onCle
           </div>
         </div>
 
-        {/* Real-time Address Mirror for absolute transparency */}
-        <div className="bg-orange-50 rounded-3xl p-6 border-2 border-dashed border-orange-200 animate-pulse-slow">
+        <div className="bg-orange-50 rounded-3xl p-6 border-2 border-dashed border-orange-200">
           <h4 className="text-xs font-black text-orange-600 uppercase mb-4 flex items-center">
             <span className="mr-2">📝</span> Live Typing Mirror
           </h4>
@@ -224,7 +234,7 @@ const CartView: React.FC<CartViewProps> = ({ items, onRemove, onUpdateQty, onCle
           <div className="divide-y divide-slate-100 overflow-x-auto">
             {items.map(item => (
               <div key={item.id} className="p-4 md:p-6 flex items-center space-x-4 md:space-x-6 min-w-[500px] md:min-w-0">
-                <img src={item.imageUrl} className="w-16 h-16 md:w-20 md:h-20 rounded-xl object-cover border border-slate-100" alt={item.name} />
+                <img src={item.imageUrl} className="w-16 h-16 md:w-20 md:h-20 rounded-xl object-contain border border-slate-100 bg-white" alt={item.name} />
                 <div className="flex-1">
                   <h4 className="font-black text-slate-800 text-sm md:text-base leading-tight">{item.name}</h4>
                   <p className="text-[10px] md:text-xs text-slate-400 mt-1">{item.category}</p>

@@ -1,12 +1,41 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Order } from '../types';
 
 interface OrderTrackingProps {
   order: Order | null;
 }
 
-const OrderTracking: React.FC<OrderTrackingProps> = ({ order }) => {
+const OrderTracking: React.FC<OrderTrackingProps> = ({ order: initialOrder }) => {
+  const [order, setOrder] = useState<Order | null>(initialOrder);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  // Sync state if initialOrder changes (e.g. new order placed)
+  useEffect(() => {
+    setOrder(initialOrder);
+  }, [initialOrder]);
+
+  const randomizeStatus = () => {
+    if (!order) return;
+    setIsUpdating(true);
+    
+    // Simulate server delay
+    setTimeout(() => {
+      const statuses: Order['status'][] = ['PROCESSING', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED'];
+      let nextStatus;
+      // Either move to next or pick random if already at the end
+      const currentIdx = statuses.indexOf(order.status);
+      if (currentIdx < statuses.length - 1) {
+        nextStatus = statuses[currentIdx + 1];
+      } else {
+        nextStatus = statuses[Math.floor(Math.random() * (statuses.length - 1))];
+      }
+      
+      setOrder({ ...order, status: nextStatus });
+      setIsUpdating(false);
+    }, 800);
+  };
+
   if (!order) {
     return (
       <div className="max-w-2xl mx-auto bg-white rounded-[2rem] p-8 md:p-12 text-center border border-slate-200 shadow-sm mt-10">
@@ -24,41 +53,44 @@ const OrderTracking: React.FC<OrderTrackingProps> = ({ order }) => {
   }
 
   const steps = [
-    { label: 'Confirmed', status: 'PROCESSING', icon: '📝', desc: 'Order received by Sri Thirumala' },
-    { label: 'Shipped', status: 'SHIPPED', icon: '📦', desc: 'Parts are on the way to your city' },
-    { label: 'Out for Delivery', status: 'OUT_FOR_DELIVERY', icon: '🛵', desc: 'Technician is reaching your home' },
-    { label: 'Delivered', status: 'DELIVERED', icon: '✅', desc: 'Hardware installed & tested' }
+    { label: 'Confirmed', status: 'PROCESSING' as const, icon: '📝', desc: 'Order received by Sri Thirumala' },
+    { label: 'Shipped', status: 'SHIPPED' as const, icon: '📦', desc: 'Parts are on the way to your city' },
+    { label: 'Out for Delivery', status: 'OUT_FOR_DELIVERY' as const, icon: '🛵', desc: 'Technician is reaching your home' },
+    { label: 'Delivered', status: 'DELIVERED' as const, icon: '✅', desc: 'Hardware installed & tested' }
   ];
 
   const currentIdx = steps.findIndex(s => s.status === order.status);
 
   return (
-    <div className="max-w-4xl mx-auto animate-fade-in space-y-6 px-1">
+    <div className="max-w-4xl mx-auto animate-fade-in space-y-6 px-1 pb-24 lg:pb-0">
       <div className="bg-white rounded-[2rem] p-6 md:p-10 border border-slate-200 shadow-xl overflow-hidden relative">
         <div className="absolute top-0 right-0 p-8 opacity-5 text-7xl md:text-9xl font-black italic select-none">TRACK</div>
         
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 border-b border-slate-100 pb-6 relative z-10">
           <div>
-            <h2 className="text-xl md:text-2xl font-black text-slate-800">Order Tracker</h2>
+            <div className="flex items-center space-x-2">
+              <h2 className="text-xl md:text-2xl font-black text-slate-800">Order Tracker</h2>
+              {isUpdating && <div className="w-2 h-2 bg-orange-500 rounded-full animate-ping"></div>}
+            </div>
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Real-time DTH Delivery Status</p>
           </div>
           <div className="bg-orange-600 px-6 py-3 rounded-2xl shadow-lg shadow-orange-600/20 flex flex-col items-center md:items-end">
             <p className="text-[10px] text-orange-100 font-black uppercase">Tracking ID</p>
-            <p className="text-lg font-black text-white">{order.trackerId}</p>
+            <p className="text-lg font-black text-white font-mono">{order.trackerId}</p>
           </div>
         </div>
 
-        {/* Stepper - Adaptive for Desktop (Horizontal) and Mobile (Vertical) */}
+        {/* Stepper - Adaptive for Desktop (Horizontal) */}
         <div className="hidden md:flex justify-between items-start mb-16 px-4 relative">
           <div className="absolute top-5 left-10 right-10 h-1 bg-slate-100 rounded-full">
             <div 
-              className="h-full bg-orange-500 transition-all duration-1000 rounded-full"
+              className="h-full bg-orange-500 transition-all duration-1000 rounded-full shadow-[0_0_10px_rgba(249,115,22,0.5)]"
               style={{ width: `${(currentIdx / (steps.length - 1)) * 100}%` }}
             ></div>
           </div>
           {steps.map((step, i) => (
             <div key={i} className="relative z-10 flex flex-col items-center w-32">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md transition-all ${
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md transition-all duration-500 ${
                 i <= currentIdx ? 'bg-orange-500 text-white scale-110' : 'bg-white border-2 border-slate-200 text-slate-300'
               }`}>
                 <span className="text-sm font-bold">{i <= currentIdx ? '✓' : i + 1}</span>
@@ -70,12 +102,12 @@ const OrderTracking: React.FC<OrderTrackingProps> = ({ order }) => {
           ))}
         </div>
 
-        {/* Vertical Stepper for Mobile/Tablets */}
+        {/* Vertical Stepper for Mobile */}
         <div className="md:hidden space-y-8 mb-10 relative">
           <div className="absolute left-5 top-2 bottom-2 w-0.5 bg-slate-100"></div>
           {steps.map((step, i) => (
             <div key={i} className="flex items-start space-x-6 relative">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center z-10 shadow-sm shrink-0 transition-all ${
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center z-10 shadow-sm shrink-0 transition-all duration-500 ${
                 i <= currentIdx ? 'bg-orange-500 text-white' : 'bg-white border-2 border-slate-100 text-slate-300'
               }`}>
                 <span className="text-xs font-black">{i <= currentIdx ? '✓' : i + 1}</span>
@@ -90,7 +122,15 @@ const OrderTracking: React.FC<OrderTrackingProps> = ({ order }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-slate-100">
           <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-             <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Shipment To</h4>
+             <div className="flex justify-between items-start mb-3">
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Shipment To</h4>
+                <button 
+                  onClick={randomizeStatus}
+                  className="text-[9px] font-black text-orange-600 bg-orange-100 px-2 py-1 rounded hover:bg-orange-200 transition-colors uppercase"
+                >
+                  {isUpdating ? 'Updating...' : 'Sync Live Status'}
+                </button>
+             </div>
              <p className="text-sm font-bold text-slate-800 leading-relaxed">
                {order.customerName}<br/>
                {order.customerPhone}<br/>
@@ -105,7 +145,8 @@ const OrderTracking: React.FC<OrderTrackingProps> = ({ order }) => {
              </div>
           </div>
 
-          <div className="bg-slate-900 p-6 rounded-2xl text-white shadow-xl">
+          <div className="bg-slate-900 p-6 rounded-2xl text-white shadow-xl relative overflow-hidden">
+             <div className="absolute top-0 right-0 w-24 h-24 bg-orange-500/10 rounded-full -translate-y-12 translate-x-12"></div>
              <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Order Items</h4>
              <div className="space-y-3 max-h-40 overflow-y-auto custom-scrollbar">
                {order.items.map((item, idx) => (
@@ -126,13 +167,13 @@ const OrderTracking: React.FC<OrderTrackingProps> = ({ order }) => {
       <div className="flex flex-col sm:flex-row gap-4">
         <button 
           onClick={() => window.open('tel:9985265605')}
-          className="flex-1 bg-white border border-slate-200 py-4 rounded-2xl font-bold text-sm text-slate-700 hover:bg-slate-50 transition-all flex items-center justify-center space-x-3"
+          className="flex-1 bg-white border border-slate-200 py-4 rounded-2xl font-bold text-sm text-slate-700 hover:bg-slate-50 transition-all flex items-center justify-center space-x-3 shadow-sm"
         >
           <span>📞</span> <span>Call Dispatch Center</span>
         </button>
         <button 
           onClick={() => window.print()}
-          className="flex-1 bg-white border border-slate-200 py-4 rounded-2xl font-bold text-sm text-slate-700 hover:bg-slate-50 transition-all flex items-center justify-center space-x-3"
+          className="flex-1 bg-white border border-slate-200 py-4 rounded-2xl font-bold text-sm text-slate-700 hover:bg-slate-50 transition-all flex items-center justify-center space-x-3 shadow-sm"
         >
           <span>🖨️</span> <span>Download Invoice</span>
         </button>

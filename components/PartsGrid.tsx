@@ -11,6 +11,7 @@ interface PartCardProps {
 const PartCard: React.FC<PartCardProps> = ({ part, onAddToCart }) => {
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   const handleAdd = () => {
     onAddToCart(part, qty);
@@ -20,12 +21,22 @@ const PartCard: React.FC<PartCardProps> = ({ part, onAddToCart }) => {
 
   return (
     <div className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-xl transition-all group flex flex-col">
-      <div className="relative h-48 overflow-hidden">
-        <img 
-          src={part.imageUrl} 
-          alt={part.name} 
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-        />
+      <div className="relative h-48 overflow-hidden bg-white p-4">
+        {!imgError && part.imageUrl ? (
+          <img 
+            src={part.imageUrl} 
+            alt={part.name} 
+            onError={() => setImgError(true)}
+            className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
+          />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl text-center p-4">
+             <div className="text-3xl mb-2 opacity-50">
+               {part.category === 'Hardware' ? '📡' : part.category === 'Receiver' ? '📺' : '🔌'}
+             </div>
+             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Image Unavailable</p>
+          </div>
+        )}
         <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm px-3 py-1 rounded-xl shadow-md border border-slate-100">
           <span className="text-sm font-black text-orange-600">₹{part.cost}</span>
         </div>
@@ -94,17 +105,9 @@ const PartsGrid: React.FC<PartsGridProps> = ({ onAddToCart }) => {
           <h2 className="text-xl font-black text-slate-800">DTH Parts Inventory</h2>
           <p className="text-xs text-slate-500">Authorized Stock for SRI THIRUMALA ENTERPRISES</p>
         </div>
-        <div className="flex space-x-2">
-          <button 
-            onClick={() => alert("Sorting by Price/Category...")}
-            className="px-4 py-2 text-sm bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors shadow-sm font-bold"
-          >
-            Filter
-          </button>
-        </div>
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
         {DTH_PARTS.map((part) => (
           <PartCard key={part.id} part={part} onAddToCart={onAddToCart} />
         ))}
