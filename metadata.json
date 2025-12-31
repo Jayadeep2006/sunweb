@@ -1,0 +1,8 @@
+{
+  "name": "SunSmart DTH - Build the Future Showcase",
+  "description": "A comprehensive AI-powered customer support and service management platform for Sun Direct DTH, featuring smart troubleshooting, technician inventory tracking, and automated query resolution.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
